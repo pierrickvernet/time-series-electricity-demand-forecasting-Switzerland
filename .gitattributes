@@ -1,4 +1,2 @@
-* linguist-vendored
-*.Rmd linguist-detectable=true
-*.RMD linguist-detectable=true
-*.R linguist-detectable=true
+*.Rmd linguist-language=R
+*.R linguist-language=R
