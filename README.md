@@ -66,6 +66,8 @@ Le modèle retenu a permis de générer les trajectoires de consommation sur un 
 │   └── time_series_switzerland_part_2.html   # Rapport HTML - Modélisation et Prévisions
 ├── monthly_full_release_long_format(1).csv   # Données historiques de la demande énergétique
 └── README.md                                 # Synthèse du projet
+```
+
 
 ---
 
