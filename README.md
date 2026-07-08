@@ -9,4 +9,4 @@ https://pierrickvernet.github.io/time-series-electricity-demand-forecasting-Swit
 
 part 2 : choisir le modèle approprié et effectuer la prévision sur la série. 
 
-https://pierrickvernet.github.io/time-series-electricity-demand-forecasting-Switzerland/part%201/time_series_switzerland_part_2.html
+https://pierrickvernet.github.io/time-series-electricity-demand-forecasting-Switzerland/part%202/time_series_switzerland_part_2.html
