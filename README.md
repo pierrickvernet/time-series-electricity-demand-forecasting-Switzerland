@@ -66,3 +66,13 @@ Le modèle retenu a permis de générer les trajectoires de consommation sur un 
 │   └── time_series_switzerland_part_2.html   # Rapport HTML - Modélisation et Prévisions
 ├── monthly_full_release_long_format(1).csv   # Données historiques de la demande énergétique
 └── README.md                                 # Synthèse du projet
+```
+
+🛠️ Stack Technique R
+
+Le code source s'appuie sur les bibliothèques standards de l'analyse des séries temporelles et de l'économétrie :
+forecast & stats : Estimation des processus SARIMA et génération des prévisions.
+urca, tseries & CADFtest : Implémentation des tests ADF, Zivot-Andrews et calcul des statistiques de racine unitaire.
+lmtest & FinTS : Tests de significativité des coefficients (coeftest) et détection des effets ARCH (ArchTest).
+TSA & knitr : Matrice EACF pour l'identification et mise en forme des tableaux statistiques.
+
