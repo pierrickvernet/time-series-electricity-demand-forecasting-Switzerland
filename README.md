@@ -1,17 +1,17 @@
 # Analyse et Modélisation de la Demande d'Électricité en Suisse
 
-Ce dépôt rassemble les travaux de modélisation statistique et de prévision de la demande électrique mensuelle en Suisse (période 2017-2025). Le projet est structuré en deux phases clés : une analyse rigoureuse de la stationnarité et des propriétés structurelles de la série, suivie d'une phase de modélisation stochastique par approche SARIMA pour générer des prévisions robustes.
+Ce dépôt rassemble les travaux de modélisation statistique et de prévision de la demande électrique mensuelle en Suisse (période 2017-2025). Le projet est structuré en deux phases clés : une analyse de la stationnarité et des propriétés structurelles de la série, suivie d'une phase de modélisation stochastique par approche SARIMA pour générer des prévisions robustes.
 
-## Rapports Interactifs (GitHub Pages)
+## 🔗 Rapports HTML
 
-Les résultats complets, incluant les graphiques dynamiques, les diagnostics de résidus et les visualisations des prévisions, sont consultables directement :
+Les résultats complets, incluant les graphiques, les diagnostics de résidus et les visualisations des prévisions, sont consultables directement :
 
 * **[Rapport Partie 1 : Étude de Stationnarité et Tests de Racine Unitaire](https://pierrickvernet.github.io/time-series-electricity-demand-forecasting-Switzerland/part%201/time_series_switzerland_part_1.html)**
 * **[Rapport Partie 2 : Identification, Estimation et Prévisions SARIMA](https://pierrickvernet.github.io/time-series-electricity-demand-forecasting-Switzerland/part%202/time_series_switzerland_part_2.html)**
 
 ---
 
-## Synthèse de la Démarche Statistique
+## 📈 Synthèse de la Démarche Statistique
 
 ### Partie 1 : Caractérisation de la Série Temporelle
 Avant toute modélisation prédictive, les propriétés stochastiques de la demande brute ont été disséquées :
@@ -35,7 +35,7 @@ La série $\Delta_{12} X_t$ étant stationnaire, l'analyse des fonctions d'autoc
 
 ---
 
-## Performances des Modèles Évalués
+## 🏆 Performances des Modèles Évalués
 
 Les critères d'information d'Akaike (AIC) et bayésien (BIC) ont été utilisés pour arbitrer le compromis biais-variance. Le tableau suivant synthétise les performances des spécifications testées sur la série brute :
 
@@ -51,13 +51,13 @@ Le **Modèle 4** s'impose comme l'unique spécification valide. Ses critères d'
 
 ---
 
-## Prévisions à 12 mois
+## 🔮 Prévisions à 12 mois
 
 Le modèle retenu a permis de générer les trajectoires de consommation sur un horizon de un an (12 mois). Grâce à la validation des hypothèses de normalité et d'homoscédasticité, les intervalles de confiance à 95% sont mathématiquement fiables et permettent de borner précisément le risque d'approvisionnement. Les projections reproduisent fidèlement les dynamiques de transition saisonnière (pics hivernaux et creux estivaux) propres au réseau électrique suisse.
 
 ---
 
-## Structure du Répertoire
+## ⚙️ Structure du Répertoire
 
 ```text
 ├── part 1/
