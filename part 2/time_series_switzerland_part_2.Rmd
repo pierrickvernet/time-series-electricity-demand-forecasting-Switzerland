@@ -1,0 +1,584 @@
+---
+title: "Demande d'électricité en Suisse"
+date: "`r Sys.Date()`"
+author: "Pierrick Vernet"
+output:
+  rmdformats::downcute:
+    self_contained: true
+    default_style: "light"
+    downcute_theme: "default"
+    number_sections: TRUE
+    df_print: paged
+    code_folding: hide
+---
+
+
+
+
+```{r, echo=FALSE, include=FALSE}
+# packages
+library(urca)
+library(CADFtest)
+library(stats)
+library(tseries)
+library(urca)
+library(FinTS)
+library(TSA)
+library(lmtest)
+library(forecast)
+library(knitr)
+
+source('/Users/pierrickvernet/Documents/MASTER IREF - S2/01_EM séries temporelles/à lire tests LM de RU de lee et al + articles sur tests RU (ZA, Perron, LS, SP)-20260311/LeeStrazicichUnitRootTest.R')
+
+```
+
+
+
+```{r}
+# importer la base de données
+tab<-read.csv("monthly_full_release_long_format(1).csv",na.strings = "", stringsAsFactors = FALSE,  encoding = "UTF-8")
+
+# 1. Définition du pays cible
+nom_pays <- "Switzerland"
+
+# 2. Filtrage des données globales pour le pays choisi
+df_temp <- subset(tab, Area == nom_pays)
+
+# 3. On créer un dataframe et une time serie
+demande <- subset(df_temp, Variable == "Demand", select = Value)
+demandets <- ts(demande$Value, frequency = 12, start = c(2017, 1), end = c(2025, 10))
+
+demandedf <- subset(df_temp, Variable == "Demand", select = c(Date, Value))
+
+# 4. Conversion de la colonne Date en format Date R
+demandedf$Date <- as.Date(demandedf$Date)
+
+# 5. Vérification de l'intégrité des données
+#print(paste("Nombre d'observations :", nrow(demandedf)))
+#sum(is.na(demandedf$Value))
+
+rm(tab,df_temp,demande)
+
+```
+
+
+
+```{r}
+
+# on différencie la demande à l'odrdre 12 pour la désaisonnaliser.
+d12 = diff(demandets, 12)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# **PARTIE 2: MODÉLISATION**
+
+Pour rappel, notre série désaisonnalisée (différenciée à l'ordre 12) `d12` est stationnaire.
+
+# ACF & PACF : Identification de D.
+```{r}
+
+op <- par(mfcol = c(2,1))
+acf(as.numeric(d12),  lag.max = 12*6, main = "ACF sur série désaisonnalisée")
+pacf(as.numeric(d12), lag.max = 12*6, main = "PACF sur série désaisonnalisée")
+par(op)
+
+```
+
+
+On constate que les coefficients multiples de 12 chutent rapidement vers 0, on a donc rho(24) rho(36), ... qui ne sont pas significatifs, on pourra donc prendre D = 0 dans la partie saisonnière de notre modèle.
+
+On voit que rho(12) est le dernier coefficient de corrélation significatif, dans l'ACF et dans la PACF, on peut donc également essayer de modéliser un AR(12) et un MA(12).
+
+
+
+
+
+
+
+
+
+
+
+
+# EACF : Identification des modèles.
+```{r}
+
+eacf(d12)
+
+```
+
+
+On repère le coin supérieur gauche du triangle de 'o' :
+
+  - En (AR=0, MA=3) : le triangle de 'o' est propre vers le bas et vers la droite,
+    ce qui suggère un MA(3) sur d12, soit un SARIMA(0,0,3)(0,0,1)[12]
+    sur la série originale.
+
+  - En (AR=1, MA=3) : la ligne AR=1 est presque entièrement composée de 'o' à
+    partir de MA=2, le triangle de 'o' est cohérent, ce qui suggère un ARMA(1,3)
+    sur d12, soit un SARIMA(1,0,3)(0,0,1)[12] sur la série originale.
+
+  - En (AR=2, MA=3) : le triangle de 'o' est également cohérent, ce qui suggère
+    un ARMA(2,3) sur d12, soit un SARIMA(2,0,3)(0,0,1)[12] sur la série originale.
+
+
+
+
+
+# Estimation des modèles
+
+## Modèle 1 : SARIMA(0,0,3)(0,0,1)[12]
+```{r}
+
+mod1 <- Arima(demandets, order = c(0,0,3), seasonal = list(order = c(0,0,1), period = 12))
+coeftest(mod1)
+
+```
+
+Tous les coefficients sont significatifs, on garde le modèle 1 comme ça.
+
+Le modèle 1 est donc un SARIMA(0,0,3)(0,0,1)[12] sur la série brute (non désaisonnalisée).
+
+
+
+
+
+## Modèle 2 : SARIMA(1,0,3)(0,0,1)[12] 
+```{r}
+
+mod2 <- Arima(demandets, order = c(1,0,3), seasonal = list(order = c(0,0,1), period = 12),fixed = c(NA, NA, NA, NA ,NA,NA))
+
+coeftest(mod2)
+
+```
+
+Le coefficient phi1 (associé à AR(1)) est le moins significatif : on le retire.
+
+```{r}
+
+mod2 <- Arima(demandets, order = c(1,0,3), seasonal = list(order = c(0,0,1), period = 12),fixed = c(0, NA, NA, NA ,NA,NA))
+
+coeftest(mod2)
+
+```
+
+Tous les coefficients sont significatifs, on garde le modèle 2 comme ceci.
+
+Le modèle 2 est un ARMA(0,0,3) sur `d12`, donc un SARIMA(0,0,3)(0,0,1)[12] sur la série brute.
+
+
+
+
+
+
+
+
+
+
+
+
+## Modèle 3 : SARIMA(2,0,3)(0,0,1)[12]
+```{r}
+
+mod2 <- Arima(demandets, order = c(2,0,3), seasonal = list(order = c(0,0,1), period = 12))
+coeftest(mod2)
+
+```
+
+Le coefficient associé à MA(3) (teta3) n'est pas significatif, on le retire.
+
+
+```{r}
+
+mod3 <- Arima(demandets, order = c(2,0,3), seasonal = list(order = c(0,0,1), period = 12), fixed = c(NA,NA,NA,NA,0,NA,NA))
+coeftest(mod3)
+
+```
+
+Tous les coefficients du modèle sont maintenant significatifs.
+
+Le modèle 3 est un ARMA(2,0,2) sur `d12`, donc un SARIMA(2,0,2)(0,0,1)[12] sur la série brute.
+
+
+
+
+
+
+## Modèle 4 : SARIMA(12,0,0)(0,0,1)[12]
+```{r}
+# AR12
+mod4 <- Arima(demandets, order = c(12,0,0), seasonal = list(order = c(0,0,1), period = 12), method = "ML",
+              fixed = c(NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA))
+coeftest(mod4)
+
+
+```
+
+On retire les coefficients non significatifs grâce à une backward selection (retirer les coefficients les moins significatifs, un par un).
+
+Cela nous donne le modèle 4  suivant (qui est un AR(12) sur notre série `d12`, donc un SARIMA(12,0,0)(0,0,1)[12] sur la série brute) :
+
+
+```{r}
+
+mod4 <- Arima(demandets, order = c(12,0,0), seasonal = list(order = c(0,0,1), period = 12), method = "ML",
+              fixed = c(NA, 0, NA, 0, 0, 0, 0, NA, 0, NA, NA, NA, NA, NA))
+coeftest(mod4)
+
+
+```
+
+
+
+
+
+
+## Modèle 5 : SARIMA(0,0,12)(0,0,1)[12]
+```{r}
+#MA12
+
+mod5 <- Arima(demandets, order = c(0,0,12), seasonal = list(order = c(0,0,1), period = 12))
+coeftest(mod5)
+
+```
+
+
+
+On retire les coefficients non significatifs grâce à une backward selection (retirer les coefficients les moins significatifs, un par un).
+
+Nous obtenons le modèle 5 suivant (un MA(9) sur `d12`, donc un SARIMA(0,0,9)(0,0,1)[12] sur la série brute) : 
+
+
+```{r}
+
+mod5 <- Arima(demandets, order = c(0,0,12), seasonal = list(order = c(0,0,1), period = 12),
+              fixed = c(NA, NA, 0, 0, 0, 0, 0, NA, NA, 0, 0, 0, NA, NA))
+coeftest(mod5)
+
+```
+
+
+
+
+
+Pour valider nos modèles, nous analysons les résidus. 
+
+Un bon modèle doit présenter des aléas qui sont un bruit blanc et suivant une loi normale pour pouvoir utiliser l'intervalle de confiance des prévisions.
+
+À titre d'exemple, nous présentons ici les résultats détaillés pour le Modèle 4, puis nous analyserons les résultats pour l'ensemble des modèles.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Tests des résidus des modèles
+
+Nous analysons ici le modèle 4 : SARIMA(12,0,0)(0,0,1)[12]
+
+## Test de Jarque-Bera (normalité des Aléas) :
+$$
+\left\{
+\begin{aligned}
+H_0 &: \text{les aléas suivent une loi normale} \\
+H_1 &: \text{les aléas ne suivent pas une loi normale}
+\end{aligned}
+\right.
+$$
+
+```{r}
+# Récupération des résidus
+res4 <- residuals(mod4)
+
+# 1. Test de Normalité (Jarque-Bera)
+# H0 : Les résidus suivent une loi normale
+jarque.bera.test(res4)
+```
+
+Nous testons la normalité des aléas du modèle 4 afin de nous assurer de la validité des intervalles de prédiction futurs. 
+
+La règle de décision stipule que si la p-value est inférieure au seuil de 5%, nous rejetons l'hypothèse nulle de normalité des aléas. 
+
+Avec une p-value de 0.9949 pour le test de Jarque-Bera, nous acceptons l'hypothèse H0 et concluons que les aléas suivent une loi normale pour notre modèle 4.
+
+
+
+
+
+
+
+
+## Test de Ljung-Box (autocorrélation des aléas) :
+$$
+\left\{
+\begin{aligned}
+H_0 &: \text{les aléas sont non autocorrélés} \\
+H_1 &: \text{les aléas sont autocorrélés}
+\end{aligned}
+\right.
+$$
+
+```{r}
+
+# 2. Test de Bruit Blanc (Ljung-Box)
+# H0 : Absence d'autocorrélation des résidus
+# On teste sur 20 retards pour capter d'éventuels restes de saisonnalité
+Box.test(res4, lag = 24, type = "Ljung-Box")
+```
+
+
+Nous vérifions l'indépendance des aléas par le test de Ljung-Box pour garantir qu'aucune autocorrélation n'a été oubliée par le modèle. 
+
+La règle de décision consiste à rejeter l'hypothèse nulle d'absence d'autocorrélation si la p-value est inférieure à 5%. 
+
+Dans le cas du modèle 4, la p-value s'élève à 0.2469, on accepte donc H0, ainsi les aléas ne sont pas autocorrélés.
+
+
+
+
+
+
+## T-test (espérance nulle des Aléas) :
+$$
+\left\{
+\begin{aligned}
+H_0 &: \mathbb{E}({\varepsilon}_t) = 0 \\
+H_1 &: \mathbb{E}({\varepsilon}_t) \neq 0
+\end{aligned}
+\right.
+$$
+
+```{r}
+
+# 3. Test d'Espérance Nulle (T-Test)
+t.test(res4)
+
+```
+
+
+La règle de décision indique que nous rejetons H0 : les aléas ont une espérance nulle, si la p-value est strictement inférieur à 0.05. 
+
+Le test affiche ici une p-value de 0.6175, nous acceptons H0 et confirmons donc que les aléas possèdent une espérance nulle.
+
+
+
+
+
+
+
+
+## Test d'Engle (homoscédasticité conditionnelle des Aléas) :
+$$
+\left\{
+\begin{aligned}
+H_0 &: \text{les aléas sont conditionnellement homoscédastiques} \\
+H_1 &: \text{les aléas sont conditionnellement hétéroscédastiques}
+\end{aligned}
+\right.
+$$
+
+```{r}
+# 4. Test d'Effet ARCH (Engle-ARCH)
+# H0 : Absence d'hétéroscédasticité conditionnelle (variance constante)
+ArchTest(res4)
+```
+
+
+Enfin, nous examinons l'homoscédasticité conditionnelle des résidus via le test d'Engle pour s'assurer de la stabilité de la variance dans le temps. 
+
+Selon la règle de décision, une p-value inférieur au seuil de 5% signifie que nous rejetons l'hypothèse nulle d'aléas sont conditionnellement homoscédastiques. 
+
+Avec une p-value de 0.6662, nous acceptons H0 et concluons que les aléas sont conditionnellement homoscédastiques.
+
+
+
+
+
+
+
+
+
+
+
+
+## Récapitulatif des Tests
+```{r}
+
+
+
+# --- Création de la table_tests ---
+table_tests <- data.frame(
+  Modele = c("mod1", "mod2", "mod3", "mod4", "mod5"),
+  Jarque_Bera = sapply(list(mod1, mod2, mod3, mod4, mod5), function(m) round(jarque.bera.test(residuals(m))$p.value, 4)),
+  Ljung_Box = sapply(list(mod1, mod2, mod3, mod4, mod5), function(m) round(Box.test(residuals(m), lag = 24, type = "Ljung-Box")$p.value, 4)),
+  T_test = sapply(list(mod1, mod2, mod3, mod4, mod5), function(m) round(t.test(residuals(m))$p.value, 4)),
+  Engle_ARCH = sapply(list(mod1, mod2, mod3, mod4, mod5), function(m) round(ArchTest(residuals(m))$p.value, 4))
+)
+
+# --- Affichage ---
+kable(table_tests)
+```
+
+
+Pour le test de Jarque Bera, tous les modèles ont une pvalue supérieur à 5%, ainsi les aléas des 5 modèles suivent une loi normale, on peut donc utiliser l'intervalle de confiance des prédicitons avec chaque modèle.
+
+Pour le test de Ljung-Box, on voit que seul le modèle 4 a des aléas non autocorrelés, les autres modèles sont donc à éliminer.
+
+Pour le T-test, tous les modèles ont une pvalue supérieur à 5% et ont donc des aléas d'espérance nulle.
+
+Enfin pour le test d'Engle, on constate que les modèles: 1,3,4,5  ont des pvalue supérieur à 5 %, leurs aléas sont conditionnellement homoscédastiques.
+En revanche le modèle 2 une pvalue inférieur à 5 %, ses aléas sont donc conditionnellement hétéroscédastiques, si on utilise le modèle 2, il faudra donc modéliser sa variance avec un modèle ARCH ou GARCH.
+
+Le seul modèle qui valide les tests et peut donc être utilisé, est le modèle 4 : SARIMA(12,0,0)(0,0,1)[12]
+
+
+
+
+
+
+
+
+
+# Performances des modèles
+```{r}
+# --- Création de la table_performance ---
+table_performance <- data.frame(
+  Modele = c("mod1", "mod2", "mod3", "mod4", "mod5"),
+  AIC = sapply(list(mod1, mod2, mod3, mod4, mod5), function(m) round(AIC(m), 2)),
+  BIC = sapply(list(mod1, mod2, mod3, mod4, mod5), function(m) round(BIC(m), 2))
+)
+
+# --- Affichage ---
+kable(table_performance)
+```
+
+
+Pour conclure sur la sélection du meilleur modèle, nous comparons les critères d'information AIC et BIC. 
+Nous privilégions le modèle ayant les valeurs les plus faibles.
+
+On constate immédiatement que le modèle 4 se détache nettement des autres avec un AIC de -27.81 et un BIC de -3.84, soit les seules valeurs négatives du tableau. 
+En comparaison, les modèles 1, 2, 3 et 5 affichent des scores bien plus élevés, dépassant tous les 9 points pour l'AIC et les 29 points pour le BIC.
+
+Le modèle 4 est donc le plus performant et le plus équilibré. 
+Couplé aux résultats des tests sur les résidus, il s'impose comme le modèle final pour réaliser nos prévisions.
+
+**Nous utiliserons donc le modèle 4 : SARIMA(12,0,0)(0,0,1)[12]**
+
+
+
+
+# Prévision
+
+```{r}
+
+# h = 12 correspond à 12 mois (1 an) de prévision
+# level = 0.95 pour l'intervalle de confiance à 95%
+prev_mod4 <- forecast(mod4, h = 12, level = 0.95)
+
+# Affichage des valeurs prévues et des intervalles
+print(prev_mod4)
+```
+
+
+
+Les prévisions générées par notre modèle SARIMA(12,0,0)(0,0,1)[12] semblent être cohérentes, on observe bien le pic attendu durant l'hiver et le creux attendu durant l'été.
+
+Grâce à la normalité des aléas, nous pouvons utiliser l'intervalle de confiance des prévisions, et nous pouvons affirmer avec un niveau de confiance de 95 % que la demande réelle se situera à l'intérieur des bornes `Lo 95` et `Hi 95` calculées pour chaque mois.
+
+
+
+
+
+```{r}
+# Tracé du graphique des prévisions
+plot(prev_mod4, 
+     main = "Prévisions de la demande d'électricité en Suisse",
+     ylab = "Demande d'électricité", 
+     xlab = "Temps",
+     fcol = "blue",     # Couleur de la ligne de prévision
+     flwd = 2)          # Épaisseur de la ligne
+
+```
+
+
+# Conclusion 
+
+Cette étude a permis de modéliser et de prévoir la demande d’électricité en Suisse.
+
+Parmi les modèles estimés, le SARIMA(12,0,0)(0,0,1)[12] (Modèle 4) s'est imposé comme le plus performant grâce à la minimisation des critères AIC et BIC. 
+
+Surtout, il est le seul dont les résidus valident l'ensemble des tests post-estimation, formant un bruit blanc gaussien et conditionnellement homoscédastique. 
+
+Ces propriétés valident rigoureusement les intervalles de confiance à 95 % des prévisions. 
+
+Sur un horizon de 12 mois, le modèle capture fidèlement la dynamique saisonnière et constitue ainsi un outil de prévision fiable pour anticiper les besoins énergétiques.
+
+
+
+
+
+
+
+
+
+
+
+
