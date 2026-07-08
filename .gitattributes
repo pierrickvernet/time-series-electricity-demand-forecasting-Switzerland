@@ -1,2 +1,2 @@
-*.html linguist-vendored
-data/* linguist-documentation
+* linguist-vendored
+*.Rmd linguist-detectable=true
