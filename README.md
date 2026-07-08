@@ -67,8 +67,9 @@ Le modèle retenu a permis de générer les trajectoires de consommation sur un 
 ├── monthly_full_release_long_format(1).csv   # Données historiques de la demande énergétique
 └── README.md                                 # Synthèse du projet
 
+---
 
-🛠️ Stack Technique R
+## 🛠️ Stack Technique R
 
 Le code source s'appuie sur les bibliothèques standards de l'analyse des séries temporelles et de l'économétrie :
 forecast & stats : Estimation des processus SARIMA et génération des prévisions.
