@@ -5,12 +5,16 @@
 - **Présentation du sujet :** Ce projet est consacré à la modélisation statistique et à la prévision de la demande électrique mensuelle globale en Suisse sur la période 2017-2025.
 - **Intérêt et cas d'usage :** La demande électrique suisse présente une forte sensibilité aux variations thermiques (chauffage en période hivernale) et subit des variations macroéconomiques et structurelles. Disposer d'un modèle prédictif robuste permet d'anticiper les pics de charge, de borner précisément le risque d'approvisionnement et d'optimiser la gestion des réseaux de transport d'énergie.
 
+---
+
 ## 2. SOURCES ET DONNÉES
 - **Origine des données :** Registre historique de la demande énergétique mensuelle suisse (fichier `monthly_full_release_long_format(1).csv.zip` dans le répertoire `data/`).
 - **Périmètre et caractéristiques :**
   - **Période d'étude :** Janvier 2017 à 2025 (données mensuelles).
   - **Moyenne mensuelle :** 5,68 TWh.
   - **Variable clé :** Demande brute mensuelle en TWh, caractérisée par une consommation mature sous forme de plateau et une forte saisonnalité annuelle (pics à environ 7 TWh en hiver).
+
+---
 
 ## 3. MÉTHODOLOGIE ET DÉTAILS TECHNIQUES
 
@@ -36,6 +40,8 @@
 - **Diagnostics et inférence :** `lmtest`, `FinTS`
 - **Identification et reporting :** `TSA`, `knitr`
 
+---
+
 ## 4. CONCLUSION ET RÉSULTATS CLÉS
 
 ### Évaluation des modèles candidats
@@ -56,6 +62,8 @@
 - **Limites :** Le modèle repose sur une approche purement stochastique univariée, sans intégrer de variables explicatives exogènes dynamiques (températures quotidiennes, indicateurs d'activité industrielle).
 - **Perspectives :** Intégration d'un modèle ARIMAX ou SARIMAX incorporant des données météorologiques et d'un modèle de lissage exponentiel (TBATS/Prophet) à des fins de comparaison.
 
+---
+
 ## 5. STRUCTURE DU DÉPÔT
 
 ```text
@@ -63,8 +71,12 @@
 ├── data/
 │   └── monthly_full_release_long_format(1).csv.zip  # Données historiques de la demande énergétique
 ├── part 1/
-│   └── time_series_switzerland_part_1.html          # Rapport HTML - Stationnarité et tests de racine unitaire
+│   ├── time_series_switzerland_part_1.Rmd            # Code source RMarkdown - Stationnarité et tests
+│   └── time_series_switzerland_part_1.html           # Rapport compilé HTML - Partie 1
 ├── part 2/
-│   └── time_series_switzerland_part_2.html          # Rapport HTML - Estimation SARIMA et prévisions
+│   ├── time_series_switzerland_part_2.Rmd            # Code source RMarkdown - Modélisation SARIMA et prévisions
+│   └── time_series_switzerland_part_2.html           # Rapport compilé HTML - Partie 2
 └── README.md                                        # Documentation du projet
 ```
+
+---
