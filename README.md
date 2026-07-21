@@ -1,43 +1,44 @@
 # Analyse et Modélisation de la Demande d'Électricité en Suisse
 
-Ce dépôt rassemble les travaux de modélisation statistique et de prévision de la demande électrique mensuelle en Suisse (période 2017-2025). Le projet est structuré en deux phases clés : une analyse de la stationnarité et des propriétés structurelles de la série, suivie d'une phase de modélisation stochastique par approche SARIMA pour générer des prévisions robustes.
+## 1. INTRODUCTION
+- **Cadre de réalisation :** Projet de prévision de série temporelle, réalisé dans le cadre de mon M1 IREF .
+- **Présentation du sujet :** Ce projet est consacré à la modélisation statistique et à la prévision de la demande électrique mensuelle globale en Suisse sur la période 2017-2025.
+- **Intérêt et cas d'usage :** La demande électrique suisse présente une forte sensibilité aux variations thermiques (chauffage en période hivernale) et subit des variations macroéconomiques et structurelles. Disposer d'un modèle prédictif robuste permet d'anticiper les pics de charge, de borner précisément le risque d'approvisionnement et d'optimiser la gestion des réseaux de transport d'énergie.
 
-## 🔗 Rapports HTML
+## 2. SOURCES ET DONNÉES
+- **Origine des données :** Registre historique de la demande énergétique mensuelle suisse (fichier `monthly_full_release_long_format(1).csv.zip` dans le répertoire `data/`).
+- **Périmètre et caractéristiques :**
+  - **Période d'étude :** Janvier 2017 à 2025 (données mensuelles).
+  - **Moyenne mensuelle :** 5,68 TWh.
+  - **Variable clé :** Demande brute mensuelle en TWh, caractérisée par une consommation mature sous forme de plateau et une forte saisonnalité annuelle (pics à environ 7 TWh en hiver).
 
-Les résultats complets, incluant les graphiques, les diagnostics de résidus et les visualisations des prévisions, sont consultables directement :
+## 3. MÉTHODOLOGIE ET DÉTAILS TECHNIQUES
 
-* **[Rapport Partie 1 : Étude de Stationnarité et Tests de Racine Unitaire](https://pierrickvernet.github.io/time-series-electricity-demand-forecasting-Switzerland/part%201/time_series_switzerland_part_1.html)**
-* **[Rapport Partie 2 : Identification, Estimation et Prévisions SARIMA](https://pierrickvernet.github.io/time-series-electricity-demand-forecasting-Switzerland/part%202/time_series_switzerland_part_2.html)**
+### Pipeline d'analyse et de traitement
+1. **Analyse exploratoire et désaisonnalisation :**
+   - Identification de la structure saisonnière d'ordre 12.
+   - Application d'un filtre de différence saisonnière ($\Delta_{12} X_t = X_t - X_{t-12}$) pour éliminer le schéma périodique annuel et stabiliser la série.
+2. **Tests de stationnarité et de rupture structurelle :**
+   - **Test ADF (Augmented Dickey-Fuller) :** Statistique de -3,70 contre une valeur critique de -1,95 (spécification `none`), permettant le rejet de l'hypothèse nulle de racine unitaire.
+   - **Tests de Zivot-Andrews et Lee-Strazicich :** Analyse de la résilience de la série face aux chocs exogènes (confinements COVID-19, crise énergétique de 2022). Confirmation de l'absence de rupture structurelle statistiquement significative sur le niveau ou la tendance.
+3. **Identification et estimation SARIMA :**
+   - Inspection des fonctions d'autocorrélation (ACF/PACF) et de la matrice EACF sur la série stationnaire $\Delta_{12} X_t$.
+   - Évaluation comparative de 5 architectures SARIMA avec procédure de sélection descendante (*backward*) pour écarter les coefficients non significatifs.
+4. **Diagnostic rigoureux des résidus :**
+   - **Normalité :** Test de Jarque-Bera ($p$-value = 0,9949).
+   - **Absence d'autocorrélation :** Test de Ljung-Box sur 24 retards ($p$-value = 0,2469).
+   - **Espérance nulle :** Test $t$ de Student ($p$-value = 0,6175).
+   - **Homoscédasticité :** Test d'Engle-ARCH ($p$-value = 0,6662).
 
----
+### Technologies et bibliothèques (Environnement R)
+- **Modélisation et prévision :** `forecast`, `stats`
+- **Tests économétriques et racine unitaire :** `urca`, `tseries`, `CADFtest`
+- **Diagnostics et inférence :** `lmtest`, `FinTS`
+- **Identification et reporting :** `TSA`, `knitr`
 
-## 📈 Synthèse de la Démarche Statistique
+## 4. CONCLUSION ET RÉSULTATS CLÉS
 
-### Partie 1 : Caractérisation de la Série Temporelle
-Avant toute modélisation prédictive, les propriétés stochastiques de la demande brute ont été disséquées :
-* **Analyse Descriptive :** Mise en évidence d'un profil de consommation mature sous forme de plateau (moyenne mensuelle de 5,68 TWh), caractérisé par une forte saisonnalité hivernale (pics à 7 TWh) liée aux contraintes thermiques (chauffage).
-* **Stratégie de Différenciation :** Application d'un filtre de différence saisonnière d'ordre 12 ($d=0, D=0$ avec différenciation à l'ordre 12, notée $\Delta_{12} X_t$) pour stabiliser la série et éliminer la composante périodique.
-* **Tests de Racine Unitaire :** Déploiement d'une batterie de tests pour valider la stationnarité de la série désaisonnalisée :
-    * *Dickey-Fuller Augmenté (ADF)* : Rejet de l'hypothèse nulle de racine unitaire en spécification `none` (statistique de -3,70 vs valeur critique de -1,95).
-    * *Zivot-Andrews & Lee-Strazicich* : Modélisation des chocs potentiels (confinements COVID-19, crise énergétique de 2022).
-    * Les résultats confirment l'absence de rupture structurelle statistiquement significative sur le niveau ou la tendance.
-  
-**La série désaisonnalisée suit un processus purement stationnaire.**
-
-### Partie 2 : Modélisation SARIMA et Prévisions
-La série $\Delta_{12} X_t$ étant stationnaire, l'analyse des fonctions d'autocorrélation (ACF/PACF) et de la matrice EACF a guidé la sélection des architectures stochastiques.
-* **Modèles Estimés :** Évaluation compétitive de 5 spécifications SARIMA (avec élimination progressive des coefficients non significatifs par sélection descendante/*backward*).
-* **Diagnostics des Résidus :** Validation rigoureuse des hypothèses fondamentales sur les erreurs du modèle optimal :
-    * *Normalité* : Validée par le test de Jarque-Bera ($p$-value = 0,9949).
-    * *Absence d'autocorrélation* : Validée par le test de Ljung-Box sur 24 retards ($p$-value = 0,2469).
-    * *Espérance nulle* : Validée par Student $t$-test ($p$-value = 0,6175).
-    * *Homoscédasticité* : Validée par le test d'Engle-ARCH ($p$-value = 0,6662).
-
----
-
-## 🏆 Performances des Modèles Évalués
-
-Les critères d'information d'Akaike (AIC) et bayésien (BIC) ont été utilisés pour arbitrer le compromis biais-variance. Le tableau suivant synthétise les performances des spécifications testées sur la série brute :
+### Évaluation des modèles candidats
 
 | Modèle Évalué | Spécification Finale | AIC | BIC | Statut des Résidus |
 | :--- | :--- | :---: | :---: | :--- |
@@ -47,36 +48,23 @@ Les critères d'information d'Akaike (AIC) et bayésien (BIC) ont été utilisé
 | **Modèle 4** | **$SARIMA(12,0,0)(0,0,1)_{12}$ (contraint)** | **-27,81** | **-3,84** | **Validé (Bruit Blanc Gaussien)** |
 | **Modèle 5** | $SARIMA(0,0,9)(0,0,1)_{12}$ (contraint) | 26,10 | 46,16 | Non Bruit Blanc (Autocorrélé) |
 
-Le **Modèle 4** s'impose comme l'unique spécification valide. Ses critères d'information négatifs traduisent une nette supériorité en termes de parcimonie et de qualité d'ajustement.
+### Apports et enseignements
+- Le **Modèle 4 ($SARIMA(12,0,0)(0,0,1)_{12}$ contraint)** est retenu comme l'unique spécification valide respectant l'ensemble des hypothèses sur les résidus, affichant les critères d'information (AIC = -27,81, BIC = -3,84) les plus performants.
+- Les projections à 12 mois restituent fidèlement la dynamique saisonnière (pics hivernaux et creux estivaux) avec des intervalles de confiance à 95% scientifiquement étalonnés.
 
----
+### Limites et perspectives
+- **Limites :** Le modèle repose sur une approche purement stochastique univariée, sans intégrer de variables explicatives exogènes dynamiques (températures quotidiennes, indicateurs d'activité industrielle).
+- **Perspectives :** Intégration d'un modèle ARIMAX ou SARIMAX incorporant des données météorologiques et d'un modèle de lissage exponentiel (TBATS/Prophet) à des fins de comparaison.
 
-## 🔮 Prévisions à 12 mois
-
-Le modèle retenu a permis de générer les trajectoires de consommation sur un horizon de un an (12 mois). Grâce à la validation des hypothèses de normalité et d'homoscédasticité, les intervalles de confiance à 95% sont mathématiquement fiables et permettent de borner précisément le risque d'approvisionnement. Les projections reproduisent fidèlement les dynamiques de transition saisonnière (pics hivernaux et creux estivaux) propres au réseau électrique suisse.
-
----
-
-## ⚙️ Structure du Répertoire
+## 5. STRUCTURE DU DÉPÔT
 
 ```text
-├── part 1/
-│   └── time_series_switzerland_part_1.html   # Rapport HTML - Analyse et Tests de Stationnarité
-├── part 2/
-│   └── time_series_switzerland_part_2.html   # Rapport HTML - Modélisation et Prévisions
+.
 ├── data/
-│   └── monthly_full_release_long_format(1).csv.zip   # Données historiques de la demande énergétique (compressé)
-└── README.md                                 # Synthèse du projet
+│   └── monthly_full_release_long_format(1).csv.zip  # Données historiques de la demande énergétique
+├── part 1/
+│   └── time_series_switzerland_part_1.html          # Rapport HTML - Stationnarité et tests de racine unitaire
+├── part 2/
+│   └── time_series_switzerland_part_2.html          # Rapport HTML - Estimation SARIMA et prévisions
+└── README.md                                        # Documentation du projet
 ```
-
-
----
-
-## 🛠️ Stack Technique R
-
-Le code source s'appuie sur les bibliothèques standards de l'analyse des séries temporelles et de l'économétrie :
-forecast & stats : Estimation des processus SARIMA et génération des prévisions.
-urca, tseries & CADFtest : Implémentation des tests ADF, Zivot-Andrews et calcul des statistiques de racine unitaire.
-lmtest & FinTS : Tests de significativité des coefficients (coeftest) et détection des effets ARCH (ArchTest).
-TSA & knitr : Matrice EACF pour l'identification et mise en forme des tableaux statistiques.
-
