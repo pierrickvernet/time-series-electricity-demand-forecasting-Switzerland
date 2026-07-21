@@ -69,14 +69,16 @@
 ```text
 .
 ├── data/
-│   └── monthly_full_release_long_format(1).csv.zip  # Données historiques de la demande énergétique
-├── part 1/
-│   ├── time_series_switzerland_part_1.Rmd            # Code source RMarkdown - Stationnarité et tests
-│   └── time_series_switzerland_part_1.html           # Rapport compilé HTML - Partie 1
-├── part 2/
-│   ├── time_series_switzerland_part_2.Rmd            # Code source RMarkdown - Modélisation SARIMA et prévisions
-│   └── time_series_switzerland_part_2.html           # Rapport compilé HTML - Partie 2
-└── README.md                                        # Documentation du projet
+│   └── monthly_full_release_long_format(1).csv.zip   # Fichier de données historique compressé
+├── functions/
+│   ├── LeeStrazicichUnitRootTest.R                   # Test de racine unitaire (Lee & Strazicich)
+│   └── LeeStrazicichUnitRootTestParallelization.R    # Version parallélisée avec bootstrap
+├── .gitattributes                                     # Configuration Git (LFS, fins de ligne)
+├── README.md                                          # Documentation générale du projet
+├── time_series_switzerland_part_1.Rmd                 # Code RMarkdown - Partie 1 (Stationnarité)
+├── time_series_switzerland_part_1.html                # Rapport HTML compilé - Partie 1
+├── time_series_switzerland_part_2.Rmd                 # Code RMarkdown - Partie 2 (Modélisation SARIMA)
+└── time_series_switzerland_part_2.html                # Rapport HTML compilé - Partie 2                                       # Documentation du projet
 ```
 
 ---
